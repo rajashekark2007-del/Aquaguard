@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AquaGuard — Intelligent Water-Waste Monitoring Prototype</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for telemetry visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b'
+            },
+            water: {
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7'
+            },
+            dark: {
+              850: '#131c2e',
+              900: '#0f172a',
+              950: '#090d16'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes wave {
+      0% { transform: translateX(0); }
+      50% { transform: translateX(-25%); }
+      100% { transform: translateX(-50%); }
+    }
+    .wave-anim {
+      animation: wave 4s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+    }
+    .glass-card {
+      background: rgba(19, 28, 46, 0.78);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="bg-dark-950 text-slate-100 min-h-screen font-sans selection:bg-emerald-500 selection:text-white flex flex-col">
+
+  <!-- Top Notification & Hackathon Meta Banner -->
+  <div class="bg-gradient-to-r from-emerald-900/60 via-dark-900 to-sky-950/60 border-b border-emerald-500/20 text-xs py-2 px-4">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center space-x-2">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">
+          YUKTHI 2026
+        </span>
+        <span class="text-slate-300 font-medium">Theme: Sustainable Development • Team <strong class="text-emerald-400">Idea Igniters</strong></span>
+      </div>
+      <div class="flex items-center space-x-4 text-slate-400">
+        <span class="hidden md:inline"><i data-lucide="users" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i> K Rajashekar, M Naga Jasnavi Goud, S Akifa, Haswanth Sai, B Sujith Kumar</span>
+        <span class="inline-flex items-center text-amber-300 font-mono text-[11px] bg-amber-950/40 px-2 py-0.5 rounded border border-amber-600/30">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping mr-1.5"></span>
+          PHASE 1: CLIENT-SIDE SIMULATION
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="border-b border-slate-800/80 sticky top-0 z-40 bg-dark-950/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <!-- Logo SVG -->
+        <div class="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-500 to-sky-500 p-0.5 shadow-lg shadow-emerald-500/20 flex items-center justify-center">
+          <div class="w-full h-full bg-dark-950 rounded-[14px] flex items-center justify-center">
+            <svg class="w-6 h-6 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+              <path d="M7 14h2l2-3 2 6 2-3h2" stroke="#38bdf8"></path>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+              AquaGuard <span class="text-xs font-normal text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/30">Hostel & Campus Edition</span>
+            </h1>
+          </div>
+          <p class="text-xs text-slate-400">Intelligent Water-Waste Monitoring & Decision-Support System</p>
+        </div>
+      </div>
+
+      <!-- Quick Status Badges -->
+      <div class="flex items-center flex-wrap gap-2">
+        <div class="flex items-center bg-dark-850 px-3 py-1.5 rounded-xl border border-slate-700/60 text-xs">
+          <i data-lucide="radio" class="w-3.5 h-3.5 text-emerald-400 animate-pulse mr-2"></i>
+          <span class="text-slate-400 mr-1.5">Sim Engine:</span>
+          <span class="text-emerald-300 font-mono font-semibold" id="simClock">00:00:00 UTC</span>
+        </div>
+
+        <button onclick="triggerSoundAlertTest()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5">
+          <i data-lucide="bell" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span>Alert Demo</span>
+        </button>
+
+        <button onclick="resetAllScenarios()" class="text-xs bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 px-3 py-1.5 rounded-xl border border-emerald-500/30 transition flex items-center gap-1.5">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          <span>Reset Sim</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Body -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 flex-grow w-full">
+
+    <!-- Top KPI Rollup Metrics -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass-card rounded-2xl p-4 relative overflow-hidden group border-slate-800">
+        <div class="flex justify-between items-start">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Est. Excess Water Loss</p>
+          <div class="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+            <i data-lucide="droplet-off" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <div class="mt-2 flex items-baseline space-x-2">
+          <span id="totalLossKpi" class="text-2xl font-bold font-mono text-white tracking-tight">180</span>
+          <span class="text-xs text-rose-400 font-semibold">Litres</span>
+        </div>
+        <div class="mt-2 text-[11px] text-slate-400 flex items-center">
+          <span class="text-rose-400 mr-1">▲ Continuous leak</span> active across 2 zones
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 to-amber-500"></div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-4 relative overflow-hidden group border-slate-800">
+        <div class="flex justify-between items-start">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Active Anomalies</p>
+          <div class="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <div class="mt-2 flex items-baseline space-x-2">
+          <span id="activeAlertsKpi" class="text-2xl font-bold font-mono text-amber-400 tracking-tight">2</span>
+          <span class="text-xs text-slate-400">Zones Flagged</span>
+        </div>
+        <div class="mt-2 text-[11px] text-slate-400">
+          1 Urgent (Zone C) • 1 Warning (Zone B)
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-1 bg-amber-500"></div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-4 relative overflow-hidden group border-slate-800">
+        <div class="flex justify-between items-start">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Peak PriorityScore</p>
+          <div class="p-2 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20">
+            <i data-lucide="shield-alert" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <div class="mt-2 flex items-baseline space-x-2">
+          <span id="maxScoreKpi" class="text-2xl font-bold font-mono text-red-400 tracking-tight">95</span>
+          <span class="text-xs text-slate-400">/ 100</span>
+        </div>
+        <div class="mt-2 text-[11px] text-slate-400 flex items-center gap-1">
+          <span class="px-1.5 py-0.5 rounded bg-red-950/80 text-red-300 text-[10px] font-mono border border-red-600/40">Zone C Tank</span>
+          <span>Requires Immediate Triage</span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-1 bg-red-500"></div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-4 relative overflow-hidden group border-slate-800">
+        <div class="flex justify-between items-start">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Pump Energy Saved</p>
+          <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <i data-lucide="zap" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <div class="mt-2 flex items-baseline space-x-2">
+          <span id="pumpEnergyKpi" class="text-2xl font-bold font-mono text-emerald-400 tracking-tight">2.14</span>
+          <span class="text-xs text-emerald-300">kWh</span>
+        </div>
+        <div class="mt-2 text-[11px] text-slate-400">
+          ~₹32.50 saved & prevents dry run pump burnout
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500"></div>
+      </div>
+    </div>
+
+    <!-- Scenario Switcher Bar (Matches PPT Slide 5) -->
+    <div class="glass-card rounded-2xl p-4 border border-emerald-500/20 bg-gradient-to-r from-dark-900 via-dark-850 to-dark-900">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+            <h2 class="text-sm font-semibold text-white tracking-wide uppercase">Hackathon Demonstration Scenarios</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">Switch presets to demonstrate real-time rule engine, loss quantification & triage scoring</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 w-full md:w-auto">
+          <button onclick="applyScenario(1)" id="btnScenario1" class="scenario-btn px-3 py-2 rounded-xl text-xs font-medium border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition flex items-center justify-center space-x-1.5">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>Scenario 1: Normal</span>
+          </button>
+          <button onclick="applyScenario(2)" id="btnScenario2" class="scenario-btn px-3 py-2 rounded-xl text-xs font-medium border border-amber-600/40 bg-amber-950/30 hover:bg-amber-900/40 text-amber-300 transition flex items-center justify-center space-x-1.5">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span>Scenario 2: Night Leak</span>
+          </button>
+          <button onclick="applyScenario(3)" id="btnScenario3" class="scenario-btn px-3 py-2 rounded-xl text-xs font-medium border border-red-500/50 bg-red-950/40 hover:bg-red-900/50 text-red-300 transition flex items-center justify-center space-x-1.5 ring-2 ring-red-500/30">
+            <i data-lucide="bell-ring" class="w-3.5 h-3.5 text-red-400"></i>
+            <span>Scenario 3: Overflow</span>
+          </button>
+          <button onclick="toggleCustomStudio()" id="btnCustom" class="px-3 py-2 rounded-xl text-xs font-medium border border-sky-500/40 bg-sky-950/30 hover:bg-sky-900/40 text-sky-300 transition flex items-center justify-center space-x-1.5">
+            <i data-lucide="sliders" class="w-3.5 h-3.5 text-sky-400"></i>
+            <span>Custom Studio</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Slide-down Custom Simulation Studio -->
+      <div id="customStudioPanel" class="hidden mt-4 pt-4 border-t border-slate-800 grid grid-cols-1 md:grid-cols-4 gap-4 bg-dark-950/60 p-4 rounded-xl">
+        <div>
+          <div class="flex justify-between text-xs text-slate-300 mb-1">
+            <span>Flow Rate (L/min)</span>
+            <span id="sliderFlowVal" class="font-mono text-emerald-400 font-bold">15.0 L/m</span>
+          </div>
+          <input type="range" min="0" max="30" step="0.5" value="15" id="sliderFlow" oninput="updateCustomSim()" class="w-full accent-emerald-500 bg-slate-800 rounded-lg cursor-pointer h-2">
+          <p class="text-[10px] text-slate-500 mt-1">Normal hostel range: 1.0 - 5.0 L/m</p>
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-slate-300 mb-1">
+            <span>Duration (minutes)</span>
+            <span id="sliderDurVal" class="font-mono text-sky-400 font-bold">60 min</span>
+          </div>
+          <input type="range" min="5" max="180" step="5" value="60" id="sliderDuration" oninput="updateCustomSim()" class="w-full accent-sky-500 bg-slate-800 rounded-lg cursor-pointer h-2">
+          <p class="text-[10px] text-slate-500 mt-1">Used to compute: Flow × Duration</p>
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-slate-300 mb-1">
+            <span>Tank Water Level (%)</span>
+            <span id="sliderTankVal" class="font-mono text-amber-400 font-bold">99%</span>
+          </div>
+          <input type="range" min="10" max="100" step="1" value="99" id="sliderTank" oninput="updateCustomSim()" class="w-full accent-amber-500 bg-slate-800 rounded-lg cursor-pointer h-2">
+          <p class="text-[10px] text-slate-500 mt-1">&gt; 95% triggers float overflow guard</p>
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-slate-300 mb-1">
+            <span>Operating Window</span>
+            <span id="timeWindowLabel" class="font-mono text-purple-400 font-bold">Night (02:00)</span>
+          </div>
+          <select id="selectTimeOfDay" onchange="updateCustomSim()" class="w-full bg-dark-900 border border-slate-700 text-xs rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-emerald-500">
+            <option value="night">Night Mode (01:00 - 05:00) [Low baseline]</option>
+            <option value="day">Day Mode (07:00 - 22:00) [High baseline]</option>
+          </select>
+          <p class="text-[10px] text-slate-500 mt-1">Night flow &gt; 0.3 L/m flags leak</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Zones Monitoring Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <!-- Zone A: Kitchen -->
+      <div id="cardZoneA" class="glass-card rounded-2xl p-5 border-slate-800 relative transition-all duration-300 hover:border-slate-700">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+              <h3 class="font-bold text-white text-base">Zone A: Kitchen Mess</h3>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">Dining & preparation plumbing lines</p>
+          </div>
+          <span id="badgeZoneA" class="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+            NORMAL
+          </span>
+        </div>
+
+        <!-- Telemetry Data Grid -->
+        <div class="grid grid-cols-2 gap-3 my-4">
+          <div class="bg-dark-900/80 p-3 rounded-xl border border-slate-800">
+            <span class="text-[11px] text-slate-400 block">Current Flow Rate</span>
+            <div class="flex items-baseline space-x-1.5 mt-1">
+              <span id="flowZoneA" class="text-xl font-bold font-mono text-white">4.0</span>
+              <span class="text-xs text-slate-400">L/min</span>
+            </div>
+            <span class="text-[10px] text-emerald-400">Matches daily prep schedule</span>
+          </div>
+
+          <div class="bg-dark-900/80 p-3 rounded-xl border border-slate-800">
+            <span class="text-[11px] text-slate-400 block">Excess Loss Est.</span>
+            <div class="flex items-baseline space-x-1.5 mt-1">
+              <span id="lossZoneA" class="text-xl font-bold font-mono text-emerald-400">0</span>
+              <span class="text-xs text-slate-400">Litres</span>
+            </div>
+            <span class="text-[10px] text-slate-500">0.0% variance</span>
+          </div>
+        </div>
+
+        <!-- PriorityScore Gauge -->
+        <div class="mb-4">
+          <div class="flex justify-between text-xs mb-1.5">
+            <span class="text-slate-400">PriorityScore (Urgency Rank)</span>
+            <span id="scoreTextZoneA" class="font-mono font-bold text-emerald-400">12 / 100</span>
+          </div>
+          <div class="w-full bg-dark-950 rounded-full h-2 overflow-hidden border border-slate-800">
+            <div id="scoreBarZoneA" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 12%"></div>
+          </div>
+        </div>
+
+        <!-- Diagnostic & Action Block -->
+        <div class="bg-dark-950/60 rounded-xl p-3 border border-slate-800/80 text-xs space-y-1.5">
+          <div class="text-slate-300 font-medium flex items-center gap-1.5">
+            <i data-lucide="check-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>Diagnostic Context:</span>
+          </div>
+          <p id="reasonZoneA" class="text-[11px] text-slate-400 leading-relaxed">
+            Within scheduled baseline meal prep schedule. No night seepage observed.
+          </p>
+          <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
+            <span class="text-slate-400">Action:</span>
+            <span id="actionZoneA" class="text-emerald-300 font-medium">Routine telemetry sampling (10s)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone B: Hostel Bathrooms (Slide Scenario 2) -->
+      <div id="cardZoneB" class="glass-card rounded-2xl p-5 border-amber-500/40 relative transition-all duration-300 hover:border-amber-500/60 shadow-lg shadow-amber-950/20">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+              <h3 class="font-bold text-white text-base">Zone B: Hostel Bathrooms</h3>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">Block-2 Ground & 1st Floor washrooms</p>
+          </div>
+          <span id="badgeZoneB" class="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-amber-500/10 text-amber-300 border border-amber-500/30">
+            WARNING
+          </span>
+        </div>
+
+        <!-- Telemetry Data Grid -->
+        <div class="grid grid-cols-2 gap-3 my-4">
+          <div class="bg-dark-900/80 p-3 rounded-xl border border-slate-800">
+            <span class="text-[11px] text-slate-400 block">Current Flow Rate</span>
+            <div class="flex items-baseline space-x-1.5 mt-1">
+              <span id="flowZoneB" class="text-xl font-bold font-mono text-amber-400">0.5</span>
+              <span class="text-xs text-slate-400">L/min</span>
+            </div>
+            <span class="text-[10px] text-rose-400 font-mono">Uninterrupted 60+ mins</span>
+          </div>
+
+          <div class="bg-dark-900/80 p-3 rounded-xl border border-slate-800">
+            <span class="text-[11px] text-slate-400 block">Excess Loss Est.</span>
+            <div class="flex items-baseline space-x-1.5 mt-1">
+              <span id="lossZoneB" class="text-xl font-bold font-mono text-amber-400">30</span>
+              <span class="text-xs text-slate-400">Litres</span>
+            </div>
+            <span class="text-[10px] text-amber-400">0.5 L/m × 60 min</span>
+          </div>
+        </div>
+
+        <!-- PriorityScore Gauge -->
+        <div class="mb-4">
+          <div class="flex justify-between text-xs mb-1.5">
+            <span class="text-slate-400">PriorityScore (Urgency Rank)</span>
+            <span id="scoreTextZoneB" class="font-mono font-bold text-amber-400">68 / 100</span>
+          </div>
+          <div class="w-full bg-dark-950 rounded-full h-2 overflow-hidden border border-slate-800">
+            <div id="scoreBarZoneB" class="bg-amber-500 h-full rounded-full transition-all duration-500" style="width: 68%"></div>
+          </div>
+        </div>
+
+        <!-- Diagnostic & Action Block -->
+        <div class="bg-dark-950/60 rounded-xl p-3 border border-slate-800/80 text-xs space-y-2">
+          <div class="text-amber-300 font-medium flex items-center gap-1.5">
+            <i data-lucide="info" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span>Diagnostic Context:</span>
+          </div>
+          <p id="reasonZoneB" class="text-[11px] text-slate-300 leading-relaxed">
+            Persistent abnormal night flow detected (02:00-03:00 hrs). High probability of leaking flush tank or unclosed tap.
+          </p>
+          <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+            <span class="text-[11px] text-slate-400">Recommended Action:</span>
+            <button onclick="resolveZone('Zone B')" class="text-[10px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-2 py-1 rounded-lg font-medium transition flex items-center gap-1">
+              <i data-lucide="wrench" class="w-3 h-3"></i>
+              <span>Inspect Flush Valves</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone C: Overhead Tank (Slide Scenario 3) -->
+      <div id="cardZoneC" class="glass-card rounded-2xl p-5 border-red-500/50 relative transition-all duration-300 hover:border-red-500/70 shadow-lg shadow-red-950/30 ring-1 ring-red-500/20">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+              <h3 class="font-bold text-white text-base">Zone C: Overhead Tank 1</h3>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">Capacity: 5,000 Litres • Rooftop Block</p>
+          </div>
+          <span id="badgeZoneC" class="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse">
+            URGENT INSPECTION
+          </span>
+        </div>
+
+        <!-- Telemetry Data & Visual Liquid Gauge -->
+        <div class="grid grid-cols-12 gap-3 my-4">
+          <div class="col-span-8 space-y-2">
+            <div class="bg-dark-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[11px] text-slate-400 block">Inlet Flow Rate</span>
+              <div class="flex items-baseline space-x-1.5 mt-0.5">
+                <span id="flowZoneC" class="text-xl font-bold font-mono text-red-400">15.0</span>
+                <span class="text-xs text-slate-400">L/min</span>
+              </div>
+              <span class="text-[10px] text-red-400 font-mono">Pump actively filling</span>
+            </div>
+
+            <div class="bg-dark-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[11px] text-slate-400 block">Excess Spillage Loss</span>
+              <div class="flex items-baseline space-x-1.5 mt-0.5">
+                <span id="lossZoneC" class="text-xl font-bold font-mono text-red-400">150</span>
+                <span class="text-xs text-slate-400">Litres</span>
+              </div>
+              <span class="text-[10px] text-red-400 font-mono">Overflow underway</span>
+            </div>
+          </div>
+
+          <!-- Animated SVG Liquid Tank Level Visualizer -->
+          <div class="col-span-4 bg-dark-900/80 rounded-xl p-2 border border-slate-800 flex flex-col items-center justify-between">
+            <span class="text-[10px] text-slate-400 font-medium">Ultrasonic Level</span>
+            <div class="relative w-14 h-24 bg-dark-950 rounded-xl border border-slate-700 overflow-hidden flex flex-col justify-end">
+              <!-- Water Level Fill -->
+              <div id="tankVisualFill" class="w-full bg-gradient-to-t from-sky-600 via-sky-400 to-emerald-300 transition-all duration-700 relative overflow-hidden" style="height: 99%;">
+                <!-- Wave animation overlay -->
+                <div class="absolute -top-2 left-0 w-28 h-4 opacity-40 bg-white rounded-full wave-anim"></div>
+              </div>
+              <span id="tankLevelText" class="absolute inset-0 flex items-center justify-center text-xs font-mono font-bold text-white drop-shadow-md">
+                99%
+              </span>
+            </div>
+            <span class="text-[9px] text-red-400 font-bold uppercase mt-1">CRITICAL HIGH</span>
+          </div>
+        </div>
+
+        <!-- PriorityScore Gauge -->
+        <div class="mb-4">
+          <div class="flex justify-between text-xs mb-1.5">
+            <span class="text-slate-400">PriorityScore (Urgency Rank)</span>
+            <span id="scoreTextZoneC" class="font-mono font-bold text-red-400">95 / 100</span>
+          </div>
+          <div class="w-full bg-dark-950 rounded-full h-2 overflow-hidden border border-slate-800">
+            <div id="scoreBarZoneC" class="bg-red-500 h-full rounded-full transition-all duration-500" style="width: 95%"></div>
+          </div>
+        </div>
+
+        <!-- Diagnostic & Action Block -->
+        <div class="bg-dark-950/60 rounded-xl p-3 border border-slate-800/80 text-xs space-y-2">
+          <div class="text-red-300 font-medium flex items-center gap-1.5">
+            <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-red-400"></i>
+            <span>Diagnostic Context:</span>
+          </div>
+          <p id="reasonZoneC" class="text-[11px] text-slate-300 leading-relaxed">
+            Tank level at 99% while inlet flow continues at 15.0 L/min. Probable mechanical float-valve failure or delayed pump cutoff.
+          </p>
+          <div class="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
+            <button onclick="simulatePumpCutoff()" id="btnPumpCutoff" class="w-full py-1.5 rounded-lg text-xs font-semibold bg-red-600 hover:bg-red-500 text-white transition flex items-center justify-center gap-1.5 shadow-md shadow-red-900/40">
+              <i data-lucide="power-off" class="w-3.5 h-3.5"></i>
+              <span>Emergency Auto-Shut Inlet Pump</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts & Technical Explainability Section (Matching Slides 4 & 5) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Chart: 60-Minute Telemetry Stream -->
+      <div class="lg:col-span-8 glass-card rounded-2xl p-5 border-slate-800">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <div class="flex items-center space-x-2">
+              <i data-lucide="line-chart" class="w-4 h-4 text-emerald-400"></i>
+              <h3 class="font-bold text-white text-sm">Simulated Multi-Zone Flow Rate (L/min over 60 mins)</h3>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">Continuous zone readings vs. expected baseline threshold</p>
+          </div>
+          <div class="flex items-center space-x-3 text-[11px]">
+            <span class="inline-flex items-center text-red-400"><span class="w-2.5 h-2.5 rounded-full bg-red-400 mr-1"></span>Zone C (Tank Overflow)</span>
+            <span class="inline-flex items-center text-amber-400"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 mr-1"></span>Zone B (Persistent Leak)</span>
+            <span class="inline-flex items-center text-emerald-400"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 mr-1"></span>Zone A (Normal Kitchen)</span>
+          </div>
+        </div>
+
+        <div class="h-64 w-full">
+          <canvas id="flowChart"></canvas>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
+          <span class="font-mono text-[11px] text-slate-500">Ref: AWWA M36 Water Audit Guidelines & IWA Loss Framework</span>
+          <span class="text-emerald-400 font-mono text-[11px] bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/20">
+            Sampling Frequency: 1 Reading / Sec (Simulated)
+          </span>
+        </div>
+      </div>
+
+      <!-- Anomaly Rule Engine & Explainability Formula Card -->
+      <div class="lg:col-span-4 glass-card rounded-2xl p-5 border-slate-800 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-white text-sm flex items-center gap-2">
+              <i data-lucide="cpu" class="w-4 h-4 text-sky-400"></i>
+              <span>Detection & Loss Logic</span>
+            </h3>
+            <span class="text-[10px] bg-sky-950 text-sky-300 border border-sky-600/30 px-2 py-0.5 rounded-full font-mono">JS Rule Engine</span>
+          </div>
+
+          <!-- Formula Callout (From Slide 4 & 5) -->
+          <div class="bg-dark-900 p-3.5 rounded-xl border border-sky-500/20 space-y-2 mb-4">
+            <span class="text-[10px] font-mono text-sky-400 tracking-wider uppercase font-semibold">Simulated Loss Formula</span>
+            <div class="font-mono text-xs text-white bg-dark-950 px-2.5 py-1.5 rounded-lg border border-slate-800">
+              Excess Loss = (Flow - Baseline) × Duration
+            </div>
+            <p id="formulaPreview" class="text-[11px] text-slate-300 font-mono">
+              0.5 L/min × 60 min = <strong class="text-amber-400">30 Litres</strong>
+            </p>
+          </div>
+
+          <!-- PriorityScore Multi-Factor Formula -->
+          <div class="space-y-2 text-xs">
+            <span class="text-slate-400 font-medium block">Explainable PriorityScore (0–100):</span>
+            <div class="bg-dark-950/70 p-2.5 rounded-lg border border-slate-800 space-y-1.5 text-[11px] text-slate-300 font-mono">
+              <div class="flex justify-between">
+                <span>Loss Volume Weight (40%):</span>
+                <span id="scoreWeightLoss" class="text-emerald-400">38 pts</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Duration Multiplier (30%):</span>
+                <span id="scoreWeightDur" class="text-sky-400">27 pts</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Critical Asset (Tank) (30%):</span>
+                <span id="scoreWeightAsset" class="text-red-400">30 pts</span>
+              </div>
+              <div class="border-t border-slate-800 pt-1 flex justify-between font-bold text-white">
+                <span>Total PriorityScore:</span>
+                <span id="scoreWeightTotal" class="text-red-400 font-mono">95 / 100</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400">
+          <p class="flex items-center gap-1.5 text-amber-300">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+            <span>Transparent rules prevent hallucinated false alarms.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Maintenance Triage Work Order Queue (Slide 2 & 5) -->
+    <div class="glass-card rounded-2xl p-5 border-slate-800">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <i data-lucide="clipboard-list" class="w-4 h-4 text-emerald-400"></i>
+            <h3 class="font-bold text-white text-base">Prioritized Facility Maintenance Triage Queue</h3>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">Automated rank-order dispatcher for college hostel maintenance personnel</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="dispatchAllPlumbers()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center space-x-1.5">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+            <span>Auto-Dispatch All Open Tasks</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Triage Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-dark-900/90 text-[11px] text-slate-400 uppercase tracking-wider font-mono border-b border-slate-800">
+            <tr>
+              <th class="py-3 px-4">Rank & Zone</th>
+              <th class="py-3 px-4">Detected Fault</th>
+              <th class="py-3 px-4">Estimated Loss</th>
+              <th class="py-3 px-4">PriorityScore</th>
+              <th class="py-3 px-4">Recommended Action</th>
+              <th class="py-3 px-4">Status & Action</th>
+            </tr>
+          </thead>
+          <tbody id="triageTableBody" class="divide-y divide-slate-800/80 font-normal">
+            <!-- Dynamically Populated Rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- System Comparison & Hardware Roadmap Drawer (Slides 3, 4, 6) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- Innovation Comparison Matrix (Slide 3) -->
+      <div class="glass-card rounded-2xl p-5 border-slate-800">
+        <h4 class="font-bold text-white text-sm mb-1 flex items-center gap-2">
+          <i data-lucide="git-compare" class="w-4 h-4 text-emerald-400"></i>
+          <span>AquaGuard vs. Traditional Monitoring</span>
+        </h4>
+        <p class="text-xs text-slate-400 mb-4">Intended differentiators for campuses and hostels</p>
+
+        <div class="space-y-3 text-xs">
+          <div class="p-2.5 rounded-xl bg-dark-900/60 border border-slate-800 flex justify-between items-center">
+            <span class="text-slate-300 font-medium">Output Type</span>
+            <div class="text-right">
+              <span class="text-slate-500 line-through mr-2">Raw totals</span>
+              <span class="text-emerald-400 font-semibold">Actionable Triage Alerts</span>
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-dark-900/60 border border-slate-800 flex justify-between items-center">
+            <span class="text-slate-300 font-medium">Loss Quantification</span>
+            <div class="text-right">
+              <span class="text-slate-500 line-through mr-2">Not calculated</span>
+              <span class="text-emerald-400 font-semibold">Excess Litres Estimator</span>
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-dark-900/60 border border-slate-800 flex justify-between items-center">
+            <span class="text-slate-300 font-medium">Inspection Priority</span>
+            <div class="text-right">
+              <span class="text-slate-500 line-through mr-2">Unranked alerts</span>
+              <span class="text-emerald-400 font-semibold">PriorityScore (0–100)</span>
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-dark-900/60 border border-slate-800 flex justify-between items-center">
+            <span class="text-slate-300 font-medium">Maintenance Workflow</span>
+            <div class="text-right">
+              <span class="text-slate-500 line-through mr-2">Manual paper log</span>
+              <span class="text-emerald-400 font-semibold">1-Click Dispatch & Pump Cutoff</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hardware Node Roadmap & Bill of Materials (Slide 6) -->
+      <div class="glass-card rounded-2xl p-5 border-slate-800">
+        <div class="flex justify-between items-start mb-1">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2">
+            <i data-lucide="layers" class="w-4 h-4 text-sky-400"></i>
+            <span>Future Phase: IoT Node Bill of Materials</span>
+          </h4>
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-sky-950 text-sky-300 border border-sky-600/30">Target: ~₹1,000 / node</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-4">Low-cost physical sensor integration plan for hostel deployment</p>
+
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="bg-dark-900/80 p-2.5 rounded-xl border border-slate-800">
+            <span class="text-slate-400 block text-[10px]">Processing Node</span>
+            <span class="font-semibold text-white">ESP32 Wi-Fi / BLE</span>
+            <span class="text-emerald-400 font-mono text-[11px] block mt-1">Est. ₹350</span>
+          </div>
+
+          <div class="bg-dark-900/80 p-2.5 rounded-xl border border-slate-800">
+            <span class="text-slate-400 block text-[10px]">Inline Flow Meter</span>
+            <span class="font-semibold text-white">YF-S201 Turbine</span>
+            <span class="text-emerald-400 font-mono text-[11px] block mt-1">Est. ₹250</span>
+          </div>
+
+          <div class="bg-dark-900/80 p-2.5 rounded-xl border border-slate-800">
+            <span class="text-slate-400 block text-[10px]">Overhead Tank Level</span>
+            <span class="font-semibold text-white">HC-SR04 Ultrasonic</span>
+            <span class="text-emerald-400 font-mono text-[11px] block mt-1">Est. ₹100</span>
+          </div>
+
+          <div class="bg-dark-900/80 p-2.5 rounded-xl border border-slate-800">
+            <span class="text-slate-400 block text-[10px]">Power & Enclosure</span>
+            <span class="font-semibold text-white">5V Adapter + IP65 Case</span>
+            <span class="text-emerald-400 font-mono text-[11px] block mt-1">Est. ₹300</span>
+          </div>
+        </div>
+
+        <div class="mt-3 bg-dark-950/50 p-2 rounded-lg border border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+          <span>Roadmap Status: Phase 1 (Software) Complete</span>
+          <span class="text-sky-300 font-medium">Phase 2 Test-Rig Ready ➔</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Live Event Audit Notification Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm"></div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 bg-dark-950 py-4 px-6 text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center space-x-2">
+        <span class="font-semibold text-slate-300">AquaGuard System</span>
+        <span>•</span>
+        <span>Hackathon Prototype Demo</span>
+        <span>•</span>
+        <span class="text-emerald-400">YUKTHI 2026</span>
+      </div>
+      <div>
+        Designed by <strong>Idea Igniters</strong> (K Rajashekar, M Naga Jasnavi Goud, S Akifa, Haswanth Sai, B Sujith Kumar)
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Logic -->
+  <script>
+    // System State
+    const state = {
+      scenario: 3, // Defaults to Slide Scenario 3 (Critical tank overflow demo)
+      zones: {
+        A: {
+          id: 'Zone A',
+          name: 'Kitchen Mess',
+          flow: 4.0,
+          baseline: 4.0,
+          tankLevel: 75,
+          loss: 0,
+          score: 12,
+          status: 'NORMAL',
+          reason: 'Within scheduled baseline meal prep schedule.',
+          action: 'Routine monitoring'
+        },
+        B: {
+          id: 'Zone B',
+          name: 'Hostel Bathrooms',
+          flow: 0.5,
+          baseline: 0.0,
+          tankLevel: 80,
+          loss: 30,
+          score: 68,
+          status: 'WARNING',
+          reason: 'Uninterrupted 60-min night flow (flush leakage suspected).',
+          action: 'Inspect flush valves & taps'
+        },
+        C: {
+          id: 'Zone C',
+          name: 'Overhead Tank 1',
+          flow: 15.0,
+          baseline: 0.0,
+          tankLevel: 99,
+          loss: 150,
+          score: 95,
+          status: 'URGENT',
+          reason: 'Tank at 99% capacity with active inlet pump continuous flow.',
+          action: 'Shut inlet pump & inspect float valve'
+        }
+      },
+      pumpAutoCutoff: false,
+      historyMinutes: 60
+    };
+
+    // Chart Instance
+    let chartInstance = null;
+
+    // Initialize Chart.js
+    function initChart() {
+      const ctx = document.getElementById('flowChart').getContext('2d');
+      const labels = Array.from({ length: 61 }, (_, i) => `${i}m`);
+
+      // Initial synthetic data curves matching PPT slides
+      const zoneCData = labels.map((_, i) => (i < 20 ? 0 : i < 30 ? (i - 20) * 1.5 : 15.0));
+      const zoneBData = labels.map(() => 0.5);
+      const zoneAData = labels.map(() => 4.0);
+      const baselineData = labels.map(() => 1.0);
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Zone C Tank Flow (L/min)',
+              data: zoneCData,
+              borderColor: '#f43f5e',
+              backgroundColor: 'rgba(244, 63, 94, 0.08)',
+              borderWidth: 2.5,
+              tension: 0.3,
+              pointRadius: 0
+            },
+            {
+              label: 'Zone B Bathroom Flow (L/min)',
+              data: zoneBData,
+              borderColor: '#f59e0b',
+              borderWidth: 2,
+              tension: 0.1,
+              pointRadius: 0
+            },
+            {
+              label: 'Zone A Kitchen Flow (L/min)',
+              data: zoneAData,
+              borderColor: '#10b981',
+              borderWidth: 2,
+              tension: 0.1,
+              pointRadius: 0
+            },
+            {
+              label: 'Threshold Baseline (Max Safe Night Rate)',
+              data: baselineData,
+              borderColor: '#64748b',
+              borderWidth: 1.5,
+              borderDash: [5, 5],
+              pointRadius: 0,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleColor: '#f8fafc',
+              bodyColor: '#cbd5e1',
+              borderColor: '#334155',
+              borderWidth: 1
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#64748b', maxTicksLimit: 12, font: { family: 'monospace', size: 10 } }
+            },
+            y: {
+              beginAtZero: true,
+              max: 20,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#64748b', font: { family: 'monospace', size: 10 } },
+              title: { display: true, text: 'Flow Rate (Litres/min)', color: '#64748b', font: { size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    // Apply Preset Scenarios directly from Hackathon Deck
+    function applyScenario(scenarioNumber) {
+      state.scenario = scenarioNumber;
+      state.pumpAutoCutoff = false;
+
+      // Update scenario buttons style
+      document.querySelectorAll('.scenario-btn').forEach(btn => btn.classList.remove('ring-2', 'ring-emerald-400', 'ring-amber-400', 'ring-red-400'));
+
+      if (scenarioNumber === 1) {
+        // Scenario 1: Normal Water Usage
+        document.getElementById('btnScenario1').classList.add('ring-2', 'ring-emerald-400');
+        state.zones.A = { id: 'Zone A', name: 'Kitchen Mess', flow: 4.0, baseline: 4.0, tankLevel: 75, loss: 0, score: 12, status: 'NORMAL', reason: 'Within scheduled baseline.', action: 'Routine monitoring' };
+        state.zones.B = { id: 'Zone B', name: 'Hostel Bathrooms', flow: 0.0, baseline: 0.0, tankLevel: 80, loss: 0, score: 8, status: 'NORMAL', reason: 'No night flow detected.', action: 'Normal state' };
+        state.zones.C = { id: 'Zone C', name: 'Overhead Tank 1', flow: 0.0, baseline: 0.0, tankLevel: 82, loss: 0, score: 10, status: 'NORMAL', reason: 'Tank level optimal at 82%.', action: 'Inlet valve idle' };
+
+        updateChartData([0, 0, 0], [0, 0, 0], [4.0, 4.0, 4.0]);
+        showToast('Scenario 1 Loaded', 'All zones operating normally within scheduled limits.', 'emerald');
+
+      } else if (scenarioNumber === 2) {
+        // Scenario 2: Persistent Night Flow (Hostel Bathrooms)
+        document.getElementById('btnScenario2').classList.add('ring-2', 'ring-amber-400');
+        state.zones.A = { id: 'Zone A', name: 'Kitchen Mess', flow: 0.0, baseline: 0.0, tankLevel: 75, loss: 0, score: 5, status: 'NORMAL', reason: 'Kitchen closed at night.', action: 'Routine sampling' };
+        state.zones.B = { id: 'Zone B', name: 'Hostel Bathrooms', flow: 0.5, baseline: 0.0, tankLevel: 70, loss: 30, score: 68, status: 'WARNING', reason: 'Uninterrupted 60-min night flow (0.5 L/m).', action: 'Inspect flush valves & taps' };
+        state.zones.C = { id: 'Zone C', name: 'Overhead Tank 1', flow: 0.0, baseline: 0.0, tankLevel: 70, loss: 0, score: 15, status: 'NORMAL', reason: 'Tank level stable.', action: 'Normal monitoring' };
+
+        updateChartData([0, 0, 0], [0.5, 0.5, 0.5], [0, 0, 0]);
+        showToast('Scenario 2 Loaded', 'Zone B: 30 Litres continuous loss detected during quiet hours.', 'amber');
+
+      } else if (scenarioNumber === 3) {
+        // Scenario 3: Tank Overflow (Urgent)
+        document.getElementById('btnScenario3').classList.add('ring-2', 'ring-red-500');
+        state.zones.A = { id: 'Zone A', name: 'Kitchen Mess', flow: 4.0, baseline: 4.0, tankLevel: 75, loss: 0, score: 12, status: 'NORMAL', reason: 'Normal prep usage.', action: 'Routine sampling' };
+        state.zones.B = { id: 'Zone B', name: 'Hostel Bathrooms', flow: 0.5, baseline: 0.0, tankLevel: 80, loss: 30, score: 68, status: 'WARNING', reason: 'Continuous night leak.', action: 'Inspect valves' };
+        state.zones.C = { id: 'Zone C', name: 'Overhead Tank 1', flow: 15.0, baseline: 0.0, tankLevel: 99, loss: 150, score: 95, status: 'URGENT', reason: 'Tank at 99% with active pump inlet open.', action: 'Shut inlet pump & check float valve' };
+
+        // Re-simulate overflow spike curve
+        const labelsCount = 61;
+        const zC = Array.from({ length: labelsCount }, (_, i) => (i < 20 ? 0 : i < 30 ? (i - 20) * 1.5 : 15.0));
+        const zB = Array.from({ length: labelsCount }, () => 0.5);
+        const zA = Array.from({ length: labelsCount }, () => 4.0);
+        updateChartFull(zC, zB, zA);
+
+        showToast('Scenario 3 Loaded', 'Zone C Tank at 99% - CRITICAL OVERFLOW SPILLAGE!', 'rose');
+      }
+
+      renderUI();
+    }
+
+    // Toggle Custom Simulation Drawer
+    function toggleCustomStudio() {
+      const panel = document.getElementById('customStudioPanel');
+      panel.classList.toggle('hidden');
+    }
+
+    // Real-Time Calculation for Custom Simulation Studio
+    function updateCustomSim() {
+      const flow = parseFloat(document.getElementById('sliderFlow').value);
+      const duration = parseInt(document.getElementById('sliderDuration').value);
+      const tankLevel = parseInt(document.getElementById('sliderTank').value);
+      const timeMode = document.getElementById('selectTimeOfDay').value;
+
+      document.getElementById('sliderFlowVal').innerText = `${flow.toFixed(1)} L/m`;
+      document.getElementById('sliderDurVal').innerText = `${duration} min`;
+      document.getElementById('sliderTankVal').innerText = `${tankLevel}%`;
+      document.getElementById('timeWindowLabel').innerText = timeMode === 'night' ? 'Night (02:00)' : 'Day (14:00)';
+
+      // Baseline comparison rule
+      const nightBaseline = 0.2;
+      const dayBaseline = 3.5;
+      const activeBaseline = timeMode === 'night' ? nightBaseline : dayBaseline;
+
+      const excessFlow = Math.max(0, flow - activeBaseline);
+      const calculatedExcessLoss = Math.round(excessFlow * duration);
+
+      // Compute explainable PriorityScore (0 - 100)
+      let score = 10; // Baseline
+      // 1. Loss factor (up to 40)
+      const lossFactor = Math.min(40, (calculatedExcessLoss / 200) * 40);
+      // 2. Duration factor (up to 30)
+      const durFactor = Math.min(30, (duration / 120) * 30);
+      // 3. Asset factor (Tank critical if level > 95%)
+      let assetFactor = 10;
+      if (tankLevel >= 95 && flow > 2.0) {
+        assetFactor = 30;
+      } else if (flow > 8.0) {
+        assetFactor = 20;
+      }
+
+      score = Math.min(100, Math.round(lossFactor + durFactor + assetFactor));
+
+      // Determine Status
+      let status = 'NORMAL';
+      let reason = 'Flow aligns with normal occupancy distribution.';
+      let action = 'Routine telemetry sampling';
+
+      if (score >= 80 || (tankLevel >= 95 && flow > 5.0)) {
+        status = 'URGENT';
+        reason = `High water volume (${calculatedExcessLoss} L) or Tank at ${tankLevel}% with active flow.`;
+        action = 'Immediate pump cutoff & physical pipe audit';
+      } else if (score >= 45 || excessFlow > 0.3) {
+        status = 'WARNING';
+        reason = `Sustained off-schedule flow for ${duration} mins exceeding ${activeBaseline} L/m baseline.`;
+        action = 'Inspect fixtures and isolation valves';
+      }
+
+      // Update Zone C with custom params
+      state.zones.C = {
+        id: 'Zone C',
+        name: 'Custom Node (Overhead)',
+        flow: flow,
+        baseline: activeBaseline,
+        tankLevel: tankLevel,
+        loss: calculatedExcessLoss,
+        score: score,
+        status: status,
+        reason: reason,
+        action: action
+      };
+
+      // Update weights in explainability card
+      document.getElementById('scoreWeightLoss').innerText = `${Math.round(lossFactor)} pts`;
+      document.getElementById('scoreWeightDur').innerText = `${Math.round(durFactor)} pts`;
+      document.getElementById('scoreWeightAsset').innerText = `${Math.round(assetFactor)} pts`;
+      document.getElementById('scoreWeightTotal').innerText = `${score} / 100`;
+
+      document.getElementById('formulaPreview').innerHTML = 
+        `(${flow.toFixed(1)} - ${activeBaseline}) L/m × ${duration} min = <strong class="text-sky-400">${calculatedExcessLoss} Litres</strong>`;
+
+      renderUI();
+    }
+
+    // Update Chart with Static Arrays
+    function updateChartData(valC, valB, valA) {
+      if (!chartInstance) return;
+      const count = chartInstance.data.labels.length;
+      chartInstance.data.datasets[0].data = Array.from({ length: count }, () => valC[0] || 0);
+      chartInstance.data.datasets[1].data = Array.from({ length: count }, () => valB[0] || 0);
+      chartInstance.data.datasets[2].data = Array.from({ length: count }, () => valA[0] || 0);
+      chartInstance.update('none');
+    }
+
+    function updateChartFull(arrC, arrB, arrA) {
+      if (!chartInstance) return;
+      chartInstance.data.datasets[0].data = arrC;
+      chartInstance.data.datasets[1].data = arrB;
+      chartInstance.data.datasets[2].data = arrA;
+      chartInstance.update();
+    }
+
+    // Emergency Pump Cutoff Simulation
+    function simulatePumpCutoff() {
+      state.pumpAutoCutoff = true;
+      state.zones.C.flow = 0.0;
+      state.zones.C.status = 'RESOLVED';
+      state.zones.C.score = 20;
+      state.zones.C.reason = 'Emergency remote relay triggered. Inlet motor shut off successfully.';
+      state.zones.C.action = 'Inspect float sensor for replacement';
+
+      showToast('Motor Relay Activated', 'Inlet pump power cut. Overhead overflow halted in Zone C.', 'emerald');
+      renderUI();
+
+      // Zero out chart curve for Zone C
+      if (chartInstance) {
+        const lastIndex = chartInstance.data.datasets[0].data.length - 1;
+        chartInstance.data.datasets[0].data[lastIndex] = 0;
+        chartInstance.update();
+      }
+    }
+
+    // Resolve an individual zone
+    function resolveZone(zoneKey) {
+      const z = zoneKey === 'Zone B' ? state.zones.B : state.zones.C;
+      z.flow = 0.0;
+      z.loss = 0;
+      z.score = 5;
+      z.status = 'RESOLVED';
+      z.reason = 'Physical fix confirmed by hostel warden/plumber.';
+      z.action = 'Monitor next 24-hr cycle';
+
+      showToast(`Work Order Closed: ${zoneKey}`, 'Plumber marked fix complete. Baseline restored.', 'emerald');
+      renderUI();
+    }
+
+    // Auto-dispatch all open work orders
+    function dispatchAllPlumbers() {
+      showToast('SMS & Push Alerts Sent', 'Campus Maintenance Team dispatched to Zone B & Zone C with PriorityScores.', 'sky');
+    }
+
+    // Reset entire simulation
+    function resetAllScenarios() {
+      applyScenario(1);
+    }
+
+    // Audio Alert Demo (Tone.js / Web Audio API)
+    function triggerSoundAlertTest() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+        osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      } catch (e) {
+        console.warn('AudioContext not allowed without direct interaction', e);
+      }
+      showToast('Sound Siren Fired', 'Audible alert triggered for priority > 80 threshold breach.', 'amber');
+    }
+
+    // Toast Notification System
+    function showToast(title, desc, color = 'emerald') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const colorClass = color === 'rose' ? 'border-rose-500/50 bg-rose-950/90 text-rose-200' :
+                         color === 'amber' ? 'border-amber-500/50 bg-amber-950/90 text-amber-200' :
+                         color === 'sky' ? 'border-sky-500/50 bg-sky-950/90 text-sky-200' :
+                         'border-emerald-500/50 bg-emerald-950/90 text-emerald-200';
+
+      toast.className = `pointer-events-auto p-3.5 rounded-xl border shadow-xl backdrop-blur-md transition-all duration-300 transform translate-y-2 opacity-0 flex items-start space-x-2.5 ${colorClass}`;
+      toast.innerHTML = `
+        <i data-lucide="bell" class="w-4 h-4 mt-0.5 shrink-0"></i>
+        <div class="text-xs">
+          <strong class="font-semibold block">${title}</strong>
+          <span class="text-[11px] opacity-90">${desc}</span>
+        </div>
+      `;
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-x-4');
+        setTimeout(() => toast.remove(), 400);
+      }, 4000);
+    }
+
+    // Render Master UI
+    function renderUI() {
+      // 1. Rollup KPIs
+      const totalLoss = state.zones.A.loss + state.zones.B.loss + state.zones.C.loss;
+      document.getElementById('totalLossKpi').innerText = totalLoss;
+
+      const activeAlerts = [state.zones.A, state.zones.B, state.zones.C].filter(z => z.status === 'WARNING' || z.status === 'URGENT').length;
+      document.getElementById('activeAlertsKpi').innerText = activeAlerts;
+
+      const maxScore = Math.max(state.zones.A.score, state.zones.B.score, state.zones.C.score);
+      document.getElementById('maxScoreKpi').innerText = maxScore;
+
+      // Pump Energy Saved metric estimate (Pumping ~1000L requires ~0.8 kWh)
+      const energySaved = (totalLoss * 0.012).toFixed(2);
+      document.getElementById('pumpEnergyKpi').innerText = energySaved;
+
+      // 2. Zone A Card
+      const zA = state.zones.A;
+      document.getElementById('flowZoneA').innerText = zA.flow.toFixed(1);
+      document.getElementById('lossZoneA').innerText = zA.loss;
+      document.getElementById('scoreTextZoneA').innerText = `${zA.score} / 100`;
+      document.getElementById('scoreBarZoneA').style.width = `${zA.score}%`;
+      document.getElementById('reasonZoneA').innerText = zA.reason;
+      document.getElementById('actionZoneA').innerText = zA.action;
+
+      // 3. Zone B Card
+      const zB = state.zones.B;
+      document.getElementById('flowZoneB').innerText = zB.flow.toFixed(1);
+      document.getElementById('lossZoneB').innerText = zB.loss;
+      document.getElementById('scoreTextZoneB').innerText = `${zB.score} / 100`;
+      document.getElementById('scoreBarZoneB').style.width = `${zB.score}%`;
+      document.getElementById('reasonZoneB').innerText = zB.reason;
+      const badgeB = document.getElementById('badgeZoneB');
+      badgeB.innerText = zB.status;
+      if (zB.status === 'RESOLVED') {
+        badgeB.className = "px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+      } else {
+        badgeB.className = "px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-amber-500/10 text-amber-300 border border-amber-500/30";
+      }
+
+      // 4. Zone C Card & Tank Visualizer
+      const zC = state.zones.C;
+      document.getElementById('flowZoneC').innerText = zC.flow.toFixed(1);
+      document.getElementById('lossZoneC').innerText = zC.loss;
+      document.getElementById('scoreTextZoneC').innerText = `${zC.score} / 100`;
+      document.getElementById('scoreBarZoneC').style.width = `${zC.score}%`;
+      document.getElementById('reasonZoneC').innerText = zC.reason;
+      document.getElementById('tankVisualFill').style.height = `${zC.tankLevel}%`;
+      document.getElementById('tankLevelText').innerText = `${zC.tankLevel}%`;
+
+      const badgeC = document.getElementById('badgeZoneC');
+      badgeC.innerText = zC.status;
+      if (zC.status === 'RESOLVED') {
+        badgeC.className = "px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+      } else {
+        badgeC.className = "px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse";
+      }
+
+      // 5. Render Prioritized Triage Work Order Queue Table
+      renderTriageTable();
+
+      // Refresh icons
+      lucide.createIcons();
+    }
+
+    function renderTriageTable() {
+      const tableBody = document.getElementById('triageTableBody');
+      const allZones = [state.zones.C, state.zones.B, state.zones.A];
+      
+      // Sort by PriorityScore descending
+      allZones.sort((a, b) => b.score - a.score);
+
+      tableBody.innerHTML = allZones.map((z, idx) => {
+        const badgeColor = z.score >= 80 ? 'text-red-400 bg-red-950/80 border-red-600/40' :
+                           z.score >= 40 ? 'text-amber-400 bg-amber-950/80 border-amber-600/40' :
+                           'text-emerald-400 bg-emerald-950/80 border-emerald-600/40';
+
+        const priorityLabel = z.score >= 80 ? 'High (#1)' : z.score >= 40 ? 'Medium (#2)' : 'Low (#3)';
+
+        return `
+          <tr class="hover:bg-slate-900/60 transition">
+            <td class="py-3 px-4">
+              <div class="font-bold text-white flex items-center gap-1.5">
+                <span class="w-5 h-5 rounded-full bg-slate-800 text-slate-300 inline-flex items-center justify-center text-[10px] font-mono">
+                  ${idx + 1}
+                </span>
+                <span>${z.name}</span>
+              </div>
+              <span class="text-[10px] text-slate-400 font-mono">${z.id}</span>
+            </td>
+            <td class="py-3 px-4">
+              <span class="text-slate-200 block font-medium">${z.status === 'URGENT' ? 'Tank Overflow / Float Stoppage' : z.status === 'WARNING' ? 'Continuous Seepage / Open Tap' : 'Normal Scheduled Flow'}</span>
+              <span class="text-[10px] text-slate-500">${z.reason}</span>
+            </td>
+            <td class="py-3 px-4 font-mono font-bold ${z.loss > 0 ? 'text-rose-400' : 'text-slate-400'}">
+              ${z.loss} Litres
+            </td>
+            <td class="py-3 px-4">
+              <div class="flex items-center space-x-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${badgeColor}">
+                  ${z.score} / 100
+                </span>
+                <span class="text-[10px] text-slate-400">${priorityLabel}</span>
+              </div>
+            </td>
+            <td class="py-3 px-4 text-[11px] text-slate-300">
+              ${z.action}
+            </td>
+            <td class="py-3 px-4">
+              ${z.status !== 'NORMAL' && z.status !== 'RESOLVED' ? `
+                <button onclick="resolveZone('${z.id}')" class="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-lg text-[10px] font-medium transition flex items-center gap-1">
+                  <i data-lucide="check" class="w-3 h-3"></i>
+                  <span>Mark Fixed</span>
+                </button>
+              ` : `
+                <span class="inline-flex items-center text-slate-400 text-[10px]">
+                  <i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-400 mr-1"></i> Checked
+                </span>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Real-Time Clock Simulator
+    function startSimClock() {
+      setInterval(() => {
+        const now = new Date();
+        document.getElementById('simClock').innerText = now.toTimeString().split(' ')[0] + ' IST';
+      }, 1000);
+    }
+
+    // Window Init
+    window.onload = function() {
+      initChart();
+      applyScenario(3); // Default display Scenario 3 as pitched in slides
+      startSimClock();
+      lucide.createIcons();
+    };
+  </script>
+</body>
+</html>
