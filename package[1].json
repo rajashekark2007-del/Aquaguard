@@ -1,0 +1,12 @@
+{
+  "name": "aquaguard-prototype",
+  "version": "1.0.0",
+  "description": "AquaGuard: Intelligent Water-Waste Monitoring System for YUKTHI 2026",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "keywords": ["iot", "water-monitoring", "anomaly-detection", "esp32", "hackathon"],
+  "author": "Idea Igniters",
+  "license": "MIT"
+}
