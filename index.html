@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071b2c">
+  <title>AquaGuard | Water-Waste Monitoring</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">≈</div>
+        <div><strong>AquaGuard</strong><small>WATER INTELLIGENCE</small></div>
+      </div>
+      <div class="side-label">WORKSPACE</div>
+      <button class="nav-item active" data-view="overview"><span>▦</span> Overview</button>
+      <button class="nav-item" data-view="zones"><span>⌖</span> Zone monitoring</button>
+      <button class="nav-item" data-view="alerts"><span>⚑</span> Alerts & actions <span class="nav-count" id="sidebar-alert-count">2</span></button>
+      <div class="sidebar-bottom">
+        <div class="live-indicator"><span></span> SIMULATION MODE</div>
+        <p>Demo data only. No live sensors are connected.</p>
+        <button class="outline-button" id="export-csv">↓ Export readings CSV</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">YUKTHI 2026 · SUSTAINABLE DEVELOPMENT</div>
+          <h1 id="page-title">Water intelligence overview</h1>
+          <p class="subtitle">Detect. Quantify. Prioritize. Save.</p>
+        </div>
+        <div class="top-actions">
+          <span class="mode-pill"><span></span> SIMULATED DATA</span>
+          <button class="primary-button" id="run-scan">↻ Run analysis</button>
+        </div>
+      </header>
+
+      <section class="toolbar">
+        <div class="field-group">
+          <label for="scenario-select">DEMO SCENARIO</label>
+          <select id="scenario-select">
+            <option value="mixed">Campus overview (mixed zones)</option>
+            <option value="normal">Normal water usage</option>
+            <option value="leak">Persistent nighttime flow</option>
+            <option value="overflow">Tank overflow risk</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="zone-filter">ZONE FILTER</label>
+          <select id="zone-filter">
+            <option value="all">All zones</option>
+            <option value="kitchen">Zone A · Kitchen</option>
+            <option value="bathrooms">Zone B · Hostel bathrooms</option>
+            <option value="tank">Zone C · Overhead tank</option>
+          </select>
+        </div>
+        <div class="updated-text">Last analysis <strong id="last-updated">Just now</strong></div>
+      </section>
+
+      <section class="metric-grid" id="metrics">
+        <article class="metric-card">
+          <div class="metric-heading">Current flow <span class="metric-icon blue">↗</span></div>
+          <div class="metric-value"><span id="metric-flow">19.5</span><small> L/min</small></div>
+          <div class="metric-foot"><span class="dot blue-dot"></span> Across monitored zones</div>
+        </article>
+        <article class="metric-card">
+          <div class="metric-heading">Estimated excess loss <span class="metric-icon amber">◉</span></div>
+          <div class="metric-value"><span id="metric-loss">180</span><small> L</small></div>
+          <div class="metric-foot">Potential avoidable water waste</div>
+        </article>
+        <article class="metric-card">
+          <div class="metric-heading">Highest priority <span class="metric-icon red">⚑</span></div>
+          <div class="metric-value"><span id="metric-priority">95</span><small>/100</small></div>
+          <div class="metric-foot"><span class="status-dot urgent"></span><span id="metric-prio-label">Urgent inspection</span></div>
+        </article>
+        <article class="metric-card">
+          <div class="metric-heading">Zones monitored <span class="metric-icon green">⌖</span></div>
+          <div class="metric-value"><span id="metric-zones">3</span><small> zones</small></div>
+          <div class="metric-foot">Kitchen · Bathrooms · Tank</div>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel chart-panel">
+          <div class="panel-heading">
+            <div><h2>Flow profile</h2><p>Illustrative readings across the last 6 intervals</p></div>
+            <span class="legend"><i></i> Flow (L/min)</span>
+          </div>
+          <div class="chart-wrap">
+            <svg id="flow-chart" viewBox="0 0 640 230" role="img" aria-label="Water flow line chart"></svg>
+          </div>
+        </article>
+        <article class="panel priority-panel">
+          <div class="panel-heading"><div><h2>Priority distribution</h2><p>Inspection urgency by zone</p></div></div>
+          <div id="priority-bars" class="priority-bars"></div>
+          <div class="priority-note"><span>i</span> Scores are demo rule outputs, not calibrated predictions.</div>
+        </article>
+      </section>
+
+      <section class="panel zones-panel" id="zone-section">
+        <div class="panel-heading section-heading">
+          <div><h2>Zone status</h2><p>Current simulated conditions and recommended next steps</p></div>
+          <span class="section-chip" id="zone-count">3 ZONES</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ZONE</th><th>FLOW</th><th>TANK LEVEL</th><th>EXCESS LOSS</th><th>PRIORITY</th><th>STATUS</th><th>RECOMMENDED ACTION</th></tr></thead>
+            <tbody id="zone-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel alerts-panel" id="alerts-section">
+        <div class="panel-heading section-heading">
+          <div><h2>Recent alerts</h2><p>Rule-based anomaly detection with explainable reasons</p></div>
+          <button class="text-button" id="show-all-alerts">View all →</button>
+        </div>
+        <div id="alert-list" class="alert-list"></div>
+      </section>
+
+      <footer>
+        <span>© AquaGuard · Idea Igniters</span>
+        <span>Prototype v1.0 · Simulated data only</span>
+      </footer>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="script.js"></script>
+</body>
+</html>
